@@ -40,5 +40,5 @@ jobs:
         pip install azure-ai-ml
     - name: Set up and run pipeline
       run: |
-        python set_up_pipeline.py
+        python set_up_pipeline.py --env ${{ env.ENV }}
       working-directory: ml/src/
