@@ -1,4 +1,4 @@
-name: Echo Branch Name
+name: Set up pipeline
 
 on:
   workflow_dispatch:
