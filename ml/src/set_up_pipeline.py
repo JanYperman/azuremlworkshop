@@ -1,11 +1,21 @@
+import argparse
+import datetime
 import os
 
 from azure.ai.ml import Input, MLClient, Output, command, dsl, load_component
-from azure.ai.ml.constants import AssetTypes
+from azure.ai.ml.constants import AssetTypes, TimeZone
 from azure.ai.ml.dsl import pipeline
-from azure.ai.ml.entities import Data, Environment
+from azure.ai.ml.entities import (Data, Environment, JobSchedule,
+                                  RecurrencePattern, RecurrenceTrigger)
 from azure.identity import DefaultAzureCredential
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--env", dest="env", required=True)
+args = parser.parse_args()
+
+env = args.env
+
+user = "janyperman"
 # enter details of your AML workspace
 subscription_id = "59a62e46-b799-4da2-8314-f56ef5acf82b"
 resource_group = "rg-azuremltraining"
@@ -20,7 +30,7 @@ ml_client = MLClient(
 web_path = "https://archive.ics.uci.edu/ml/machine-learning-databases/00350/default%20of%20credit%20card%20clients.xls"
 
 credit_data = Data(
-    name="creditcard_defaults",
+    name=f"{env}_{user}_creditcard_defaults",
     path=web_path,
     type=AssetTypes.URI_FILE,
     description="Dataset for credit card defaults",
@@ -35,7 +45,7 @@ print(
 cpu_compute_target = "aml-cluster"
 
 # Environment setup
-custom_env_name = "aml-scikit-learn"
+custom_env_name = f"{env}_{user}_aml-scikit-learn"
 dependencies_dir = "dependencies"
 pipeline_job_env = Environment(
     name=custom_env_name,
@@ -54,7 +64,7 @@ print(
 # Define the components
 data_prep_src_dir = "components/data_prep"
 data_prep_component = command(
-    name="data_prep_credit_defaults",
+    name=f"{env}_{user}_data_prep_credit_defaults",
     display_name="Data preparation for training",
     description="reads a .xl input, split the input to train and test",
     inputs={
@@ -109,7 +119,7 @@ def credit_defaults_pipeline(
         "pipeline_job_test_data": data_prep_job.outputs.test_data,
     }
 
-registered_model_name = "janyperman_credit_defaults_model"
+registered_model_name = f"{env}_{user}_credit_defaults_model"
 
 # Let's instantiate the pipeline with the parameters of our choice
 pipeline = credit_defaults_pipeline(
@@ -119,8 +129,29 @@ pipeline = credit_defaults_pipeline(
     pipeline_job_registered_model_name=registered_model_name,
 )
 
-pipeline_job = ml_client.jobs.create_or_update(
-    pipeline,
-    # Project's name
-    experiment_name="gha_e2e_registered_components",
-)
+if env in ["dev", "uat"]:
+    # Perform a dry run of the pipeline
+    pipeline_job = ml_client.jobs.create_or_update(
+        pipeline,
+        # Project's name
+        experiment_name=f"{env}_{user}_gha_credit",
+    )
+if env == "prd":
+    # In prd we only schedule
+    schedule_name = f"{env}_{user}_credit"
+
+    schedule_start_time = datetime.datetime.utcnow()
+    recurrence_trigger = RecurrenceTrigger(
+        frequency="month",
+        interval=1,
+        schedule=RecurrencePattern(month_days=1, hours=1, minutes=0),
+        start_time=schedule_start_time,
+        time_zone=TimeZone.ROMANCE_STANDARD_TIME,
+    )
+
+    job_schedule = JobSchedule(
+        name=schedule_name, trigger=recurrence_trigger, create_job=pipeline
+    )
+
+    job_schedule = ml_client.schedules.begin_create_or_update(schedule=job_schedule).result()
+    print(job_schedule)
