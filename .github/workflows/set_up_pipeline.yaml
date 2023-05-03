@@ -1,6 +1,7 @@
 name: Echo Branch Name
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
