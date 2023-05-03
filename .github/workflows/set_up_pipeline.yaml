@@ -1,0 +1,21 @@
+name: Echo Branch Name
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  echo_branch_name:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: ${{ github.ref == 'refs/heads/main' && 'prd' || (github.ref == 'refs/heads/develop' && 'uat' || 'dev') }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Echo environment and branch name
+      run: |
+        echo "Environment: ${{ env.BRANCH_NAME }}"
