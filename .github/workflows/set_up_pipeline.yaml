@@ -30,3 +30,7 @@ jobs:
     - name: Echo environment and branch name
       run: |
         echo "Environment: ${{ env.ENV }}"
+    - name: Set up and run pipeline
+      run: |
+        python set_up_pipeline.py
+      working-directory: ml/src/
