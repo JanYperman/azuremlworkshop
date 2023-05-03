@@ -17,6 +17,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
+    - name: Install Azure ML CLI extension
+      run: |
+        az extension add --source https://azuremlsdktestpypi.blob.core.windows.net/wheels/sdk-cli-v2-public/ml-2.8.0-py3-none-any.whl --yes
+    - name: Print data assets
+      run: |
+        az ml data list --subscription 59a62e46-b799-4da2-8314-f56ef5acf82b -g rg-azuremltraining -w dummy-workspace
     - name: Echo environment and branch name
       run: |
         echo "Environment: ${{ env.BRANCH_NAME }}"
