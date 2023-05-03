@@ -4,9 +4,13 @@ import os
 
 from azure.ai.ml import Input, MLClient, Output, command, dsl, load_component
 from azure.ai.ml.constants import AssetTypes, TimeZone
-from azure.ai.ml.dsl import pipeline
-from azure.ai.ml.entities import (Data, Environment, JobSchedule,
-                                  RecurrencePattern, RecurrenceTrigger)
+from azure.ai.ml.entities import (
+    Data,
+    Environment,
+    JobSchedule,
+    RecurrencePattern,
+    RecurrenceTrigger,
+)
 from azure.identity import DefaultAzureCredential
 
 parser = argparse.ArgumentParser()
@@ -27,7 +31,10 @@ ml_client = MLClient(
 )
 
 # Data setup
-web_path = "https://archive.ics.uci.edu/ml/machine-learning-databases/00350/default%20of%20credit%20card%20clients.xls"
+web_path = (
+    "https://archive.ics.uci.edu/ml/machine-learning-databases/"
+    "00350/default%20of%20credit%20card%20clients.xls"
+)
 
 credit_data = Data(
     name=f"{env}_{user}_creditcard_defaults",
@@ -39,7 +46,8 @@ credit_data = Data(
 
 credit_data = ml_client.data.create_or_update(credit_data)
 print(
-    f"Dataset with name {credit_data.name} was registered to workspace, the dataset version is {credit_data.version}"
+    f"Dataset with name {credit_data.name} was registered to workspace,"
+    f"the dataset version is {credit_data.version}"
 )
 
 cpu_compute_target = "aml-cluster"
@@ -58,7 +66,8 @@ pipeline_job_env = Environment(
 pipeline_job_env = ml_client.environments.create_or_update(pipeline_job_env)
 
 print(
-    f"Environment with name {pipeline_job_env.name} is registered to workspace, the environment version is {pipeline_job_env.version}"
+    f"Environment with name {pipeline_job_env.name} is registered to workspace,"
+    f"the environment version is {pipeline_job_env.version}"
 )
 
 # Define the components
@@ -88,6 +97,7 @@ data_prep_component = command(
 train_src_dir = "components/train/"
 train_component = load_component(source=os.path.join(train_src_dir, "train.yml"))
 
+
 @dsl.pipeline(
     compute=cpu_compute_target,
     description="E2E data_perp-train pipeline",
@@ -105,10 +115,10 @@ def credit_defaults_pipeline(
     )
 
     # using train_func like a python call with its own inputs
-    train_job = train_component(
-        train_data=data_prep_job.outputs.train_data,  # note: using outputs from previous step
-        test_data=data_prep_job.outputs.test_data,  # note: using outputs from previous step
-        learning_rate=pipeline_job_learning_rate,  # note: using a pipeline input as parameter
+    train_component(
+        train_data=data_prep_job.outputs.train_data,
+        test_data=data_prep_job.outputs.test_data,
+        learning_rate=pipeline_job_learning_rate,
         registered_model_name=pipeline_job_registered_model_name,
     )
 
@@ -118,6 +128,7 @@ def credit_defaults_pipeline(
         "pipeline_job_train_data": data_prep_job.outputs.train_data,
         "pipeline_job_test_data": data_prep_job.outputs.test_data,
     }
+
 
 registered_model_name = f"{env}_{user}_credit_defaults_model"
 
@@ -153,5 +164,7 @@ if env == "prd":
         name=schedule_name, trigger=recurrence_trigger, create_job=pipeline
     )
 
-    job_schedule = ml_client.schedules.begin_create_or_update(schedule=job_schedule).result()
+    job_schedule = ml_client.schedules.begin_create_or_update(
+        schedule=job_schedule
+    ).result()
     print(job_schedule)

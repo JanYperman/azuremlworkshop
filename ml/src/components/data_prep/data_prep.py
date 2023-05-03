@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 
 import mlflow
@@ -35,7 +34,8 @@ def main():
         test_size=args.test_train_ratio,
     )
 
-    # output paths are mounted as folder, therefore, we are adding a filename to the path
+    # output paths are mounted as folder,
+    # therefore, we are adding a filename to the path
     credit_train_df.to_csv(os.path.join(args.train_data, "data.csv"), index=False)
 
     credit_test_df.to_csv(os.path.join(args.test_data, "data.csv"), index=False)
