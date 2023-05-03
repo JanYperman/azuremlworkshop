@@ -36,7 +36,7 @@ cpu_compute_target = "aml-cluster"
 
 # Environment setup
 custom_env_name = "aml-scikit-learn"
-
+dependencies_dir = "dependencies"
 pipeline_job_env = Environment(
     name=custom_env_name,
     description="Custom environment for Credit Card Defaults pipeline",
