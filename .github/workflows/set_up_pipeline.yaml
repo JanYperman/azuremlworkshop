@@ -11,7 +11,7 @@ jobs:
   echo_branch_name:
     runs-on: ubuntu-latest
     env:
-      BRANCH_NAME: ${{ github.ref == 'refs/heads/main' && 'prd' || (github.ref == 'refs/heads/develop' && 'uat' || 'dev') }}
+      ENV: ${{ github.ref == 'refs/heads/main' && 'prd' || (github.ref == 'refs/heads/develop' && 'uat' || 'dev') }}
 
     steps:
     - name: Checkout repository
@@ -29,4 +29,4 @@ jobs:
         az ml data list --subscription 59a62e46-b799-4da2-8314-f56ef5acf82b -g rg-azuremltraining -w dummy-workspace
     - name: Echo environment and branch name
       run: |
-        echo "Environment: ${{ env.BRANCH_NAME }}"
+        echo "Environment: ${{ env.ENV }}"
