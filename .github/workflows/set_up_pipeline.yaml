@@ -13,7 +13,6 @@ jobs:
   set_up_pipeline:
     runs-on: ubuntu-latest
     # Avoid triggering if a pull_request is created
-    if: github.event_name != 'pull_request'
     env:
       ENV: ${{ github.ref == 'refs/heads/main' && 'prd' || (github.ref == 'refs/heads/develop' && 'uat' || 'dev') }}
 
