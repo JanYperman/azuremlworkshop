@@ -18,15 +18,6 @@ def select_first_file(path):
     return os.path.join(path, files[0])
 
 
-# Start Logging
-mlflow.start_run()
-
-# enable autologging
-mlflow.sklearn.autolog()
-
-os.makedirs("./outputs", exist_ok=True)
-
-
 def main():
     """Main function of the script."""
 
@@ -39,6 +30,11 @@ def main():
     parser.add_argument("--registered_model_name", type=str, help="model name")
     parser.add_argument("--model", type=str, help="path to model file")
     args = parser.parse_args()
+
+    # enable autologging
+    mlflow.sklearn.autolog()
+
+    os.makedirs("./outputs", exist_ok=True)
 
     # paths are mounted as folder, therefore, we are selecting the file from folder
     train_df = pd.read_csv(select_first_file(args.train_data))
@@ -77,14 +73,11 @@ def main():
         artifact_path=args.registered_model_name,
     )
 
-    # # Saving the model to a file
-    # mlflow.sklearn.save_model(
-    #     sk_model=clf,
-    #     path=os.path.join(args.model, "trained_model"),
-    # )
-
-    # Stop Logging
-    mlflow.end_run()
+    # Saving the model to a file
+    mlflow.sklearn.save_model(
+        sk_model=clf,
+        path=os.path.join(args.model, "trained_model"),
+    )
 
 
 if __name__ == "__main__":
